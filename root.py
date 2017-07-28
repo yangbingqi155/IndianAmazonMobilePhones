@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import urllib
+import urllib2
+import logging
+import io
+import codecs
+
+#enable proxy
+enable_proxy=True
+#proxy url
+proxy_url=''
+#web page response time out
+response_time_out=100
+
+
+url='http://www.amazon.in/s/ref=s9_acss_bw_cts_VodooFS_T1L4_w?rh=n%3A976419031%2Cn%3A!976420031%2Cn%3A1389401031%2Cn%3A1389432031%2Cp_98%3A10440597031&qid=1484135102&bbn=1389432031&low-price=&high-price=5%2C000&x=6&y=10&pf_rd_m=A1K21FY43GMZF8&pf_rd_s=merchandised-search-3&pf_rd_r=8E3TJVQ2D0S8CQR5VAVW&pf_rd_t=101&pf_rd_p=c40a9d88-2a21-4ea6-9319-5a465b910fd7&pf_rd_i=1389401031'
+
+
+def get_html(url):
+	user_agent ='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'
+	referer=url
+	content_type='text/html;charset=UTF-8'
+
+	headers={'User-Agent':user_agent,'Referer':referer,'Content-Type':content_type}
+
+	request=urllib2.Request(url,None,headers)
+	html=''
+	try:
+		response=urllib2.urlopen(request,timeout=response_time_out);
+		html=response.read()
+	except urllib2.HTTPError,e:
+		error,info=e.reason
+		logging.exception(info+":"+url+","+e.code)
+		raise e
+	except urllib2.URLError,e:
+		error,info=e.reason
+		logging.exception(info+":"+url)
+		raise e	
+	return html
+
+def use_proxy(enable_proxy,proxy_url):
+	proxy_handler=urllib2.ProxyHandler({"http",proxy_url})
+	null_proxy_handler=urllib2.ProxyHandler({})
+	if enable_proxy:
+		opener=urllib2.build_opener(proxy_handler)
+	else:
+		opener=urllib2.build_opener(null_proxy_handler)
+	urllib2.install_opener(opener)
+
+def html_write(html,filename):
+	with open(filename,'w') as f:
+		f.write(html)
+
+	
+html=get_html(url)
+html_write(html,'abc.html')
+print html
