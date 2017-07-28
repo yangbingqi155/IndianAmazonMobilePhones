@@ -5,11 +5,15 @@ import urllib2
 import logging
 import io
 import codecs
+import requests
+from lxml import etree
 
 #enable proxy
-enable_proxy=True
-#proxy url
-proxy_url=''
+enable_proxy=False
+#proxes
+proxies = {
+  "https": "http://41.118.132.69:4433"
+}
 #web page response time out
 response_time_out=100
 
@@ -18,26 +22,12 @@ url='http://www.amazon.in/s/ref=s9_acss_bw_cts_VodooFS_T1L4_w?rh=n%3A976419031%2
 
 
 def get_html(url):
-	user_agent ='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'
-	referer=url
-	content_type='text/html;charset=UTF-8'
-
-	headers={'User-Agent':user_agent,'Referer':referer,'Content-Type':content_type}
-
-	request=urllib2.Request(url,None,headers)
-	html=''
-	try:
-		response=urllib2.urlopen(request,timeout=response_time_out);
-		html=response.read()
-	except urllib2.HTTPError,e:
-		error,info=e.reason
-		logging.exception(info+":"+url+","+e.code)
-		raise e
-	except urllib2.URLError,e:
-		error,info=e.reason
-		logging.exception(info+":"+url)
-		raise e	
-	return html
+	headers = {'content-type': 'application/json','User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}
+	if enable_proxy==False:
+		r=requests.get(url,headers=headers)
+	else:
+		r=requests.get(url,headers=headers,proxies=proxies)
+	return r.text
 
 def use_proxy(enable_proxy,proxy_url):
 	proxy_handler=urllib2.ProxyHandler({"http",proxy_url})
@@ -49,10 +39,15 @@ def use_proxy(enable_proxy,proxy_url):
 	urllib2.install_opener(opener)
 
 def html_write(html,filename):
-	with open(filename,'w') as f:
+	with codecs.open(filename,'w','utf-8') as f:
 		f.write(html)
 
+def get_products(html):
+	content=etree.HTML(html)
+	result=content.xpath("li[@class='s-result-item  celwidget ']")
+	return result
 	
 html=get_html(url)
-html_write(html,'abc.html')
-print html
+print get_products(html)
+#html_write(html,'abc.html')
+#print html.encode('utf-8')
