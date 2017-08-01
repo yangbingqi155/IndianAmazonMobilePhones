@@ -18,7 +18,7 @@ def getProxyList(targeturl="http://www.xicidaili.com/nn/"):
     requestHeader = {'User-Agent': "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.80 Safari/537.36"}
     
     
-    for page in range(1, 2):
+    for page in range(1,2):
         url = targeturl + str(page)
         #print url
         request = urllib2.Request(url, headers=requestHeader)
@@ -80,7 +80,7 @@ def verifyProxyList():
     inFile.close() 
     outFile.close()
 def get_verified_proxies_num():
-	outFile = codecs.open('verified.txt', 'r','utf-8')
+	outFile = open('verified.txt')
 	i=0
 	while True:
 		lock.acquire()
@@ -90,7 +90,7 @@ def get_verified_proxies_num():
 		i=i+1
 	return i
 def get_verified_proxy(index):
-	outFile = codecs.open('verified.txt', 'r','utf-8')
+	outFile = open('verified.txt')
 	i=0
 	while True:
 		lock.acquire()
@@ -101,7 +101,7 @@ def get_verified_proxy(index):
 			line = ll.strip().split('|')
 			protocol= str(line[5])
 			address= protocol+"://"+line[1]+":"+str(line[2])
-			return {protocol,address}
+			return {protocol:address}
 		i=i+1
 def get_proxies_from_web():
     tmp = codecs.open('proxy.txt','w','utf-8')
