@@ -6,9 +6,12 @@ import httplib
 import threading
 import sys
 import codecs
+from datetime import datetime, date, time
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+inFile = open('proxy.txt')
+outFile = codecs.open('verified.txt', 'a','utf-8')
 lock = threading.Lock()
 
 def getProxyList(targeturl="http://www.xicidaili.com/nn/"):
@@ -51,10 +54,8 @@ def getProxyList(targeturl="http://www.xicidaili.com/nn/"):
 
 def verifyProxyList():
     #验证代理的有效性
-    outFile = codecs.open('verified.txt', 'a','utf-8')
     requestHeader = {'User-Agent': "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.80 Safari/537.36"}
     myurl = 'http://www.baidu.com/'
-    inFile = open('proxy.txt')
     while True:
         lock.acquire()
         ll = inFile.readline().strip()
@@ -77,8 +78,6 @@ def verifyProxyList():
         except BaseException as e:
             #print e
             print "---Failure:" + ip + ":" + port
-    inFile.close() 
-    outFile.close()
 def get_verified_proxies_num():
 	outFile = open('verified.txt')
 	i=0
@@ -110,6 +109,8 @@ def get_proxies_from_web():
     tmp1 = codecs.open('verified.txt' , 'w','utf-8')
     tmp1.write("")
     tmp1.close()
+    print u"开始获取代理,"
+    print datetime.now()
     proxynum = getProxyList("http://www.xicidaili.com/nn/")
     print u"国内高匿：" + str(proxynum)
     # proxynum = getProxyList("http://www.xicidaili.com/nt/")
@@ -119,18 +120,24 @@ def get_proxies_from_web():
     # proxynum = getProxyList("http://www.xicidaili.com/wt/")
     # print u"国外透明：" + str(proxynum)
 
+    print u"结束获取代理,"
+    print datetime.now()
     print u"\n验证代理的有效性："
+    print datetime.now()
     verifyProxyList()
-    # all_thread = []
-    # for i in range(1):
-        # t = threading.Thread(target=verifyProxyList)
-        # all_thread.append(t)
-        # t.start()
+    all_thread = []
+    for i in range(50):
+        t = threading.Thread(target=verifyProxyList)
+        all_thread.append(t)
+        t.start()
         
-    # for t in all_thread:
-        # t.join()
+    for t in all_thread:
+        t.join()
     
     print u"代理获取完毕."
+    print datetime.now()
+    inFile.close()
+    outFile.close()
 if __name__ == '__main__':
     get_proxies_from_web()
 

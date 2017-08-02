@@ -15,7 +15,6 @@ try:
 	import cPickle as pickle
 except ImportError:
 	import pickle
-
 import config
 import basic
 import models
@@ -43,6 +42,7 @@ def get_product_info_urls(p_list_page_url):
 def get_product_info(p_info_url):
 	p_info=models.ProductModel()
 	status_code=200
+	html=''
 	try:
 		html,status_code=basic.get_html(p_info_url)
 		content=etree.HTML(html)
@@ -71,8 +71,10 @@ def get_product_info(p_info_url):
 	except BaseException as e:
 		print 'error url:'+p_info_url+',status_code:'+str(status_code)
 		logging.exception('error url:'+p_info_url+',status_code:'+str(status_code))
-		basic.html_write(html,'abc.html')
-		raise e
+		#访问超时则切换代理
+		change_proxy()
+		#basic.html_write(html,'abc.html')
+		#raise e
 	global has_p_info_pages
 	has_p_info_pages=has_p_info_pages+1
 	return p_info
@@ -109,10 +111,11 @@ def set_proxy():
 		config.current_proxy_index=0
 	config.proxies=httpproxy.get_verified_proxy(config.current_proxy_index)
 	config.enable_proxy=True
-	print u'成功设置代理信息!!\n'
+	print u'成功设置代理信息，当前代理索引'+str(config.current_proxy_index)+'\n'
 #切换代理信息
 def change_proxy():
 	print u'切换代理信息....\n'
+	httpproxy.get_proxies_from_web()
 	verified_proxies_num=httpproxy.get_verified_proxies_num()
 	if config.current_proxy_index+1>=verified_proxies_num:
 		config.current_proxy_index=0

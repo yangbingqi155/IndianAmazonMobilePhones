@@ -13,9 +13,9 @@ import config
 def get_html(url):
 	headers = {'content-type': 'application/json','User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}
 	if config.enable_proxy==False:
-		r=requests.get(url,headers=headers,timeout=20)
+		r=requests.get(url,headers=headers,timeout=60)
 	else:
-		r=requests.get(url,headers=headers,proxies=config.proxies,timeout=20)
+		r=requests.get(url,headers=headers,proxies=config.proxies,timeout=60)
 	return r.text,r.status_code
 
 def use_proxy(enable_proxy,proxy_url):
