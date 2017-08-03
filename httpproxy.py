@@ -109,10 +109,9 @@ def get_proxies_from_web():
     tmp1 = codecs.open('verified.txt' , 'w','utf-8')
     tmp1.write("")
     tmp1.close()
-    print u"开始获取代理,"
-    print datetime.now()
+    print "get proxy ip starting:"+datetime.now()
     proxynum = getProxyList("http://www.xicidaili.com/nn/")
-    print u"国内高匿：" + str(proxynum)
+    print "CN-Anonymity" + str(proxynum)
     # proxynum = getProxyList("http://www.xicidaili.com/nt/")
     # print u"国内透明：" + str(proxynum)
     # proxynum = getProxyList("http://www.xicidaili.com/wn/")
@@ -120,9 +119,9 @@ def get_proxies_from_web():
     # proxynum = getProxyList("http://www.xicidaili.com/wt/")
     # print u"国外透明：" + str(proxynum)
 
-    print u"结束获取代理,"
+    print "get proxy ip finish,"+datetime.now()
     print datetime.now()
-    print u"\n验证代理的有效性："
+    print u"\n验证代理的有效性：".encode('utf-8').strip()
     print datetime.now()
     verifyProxyList()
     all_thread = []
@@ -134,7 +133,7 @@ def get_proxies_from_web():
     for t in all_thread:
         t.join()
     
-    print u"代理获取完毕."
+    print u"代理获取完毕.".encode('utf-8').strip()
     print datetime.now()
     inFile.close()
     outFile.close()
