@@ -18,7 +18,7 @@ except ImportError:
 import config
 import basic
 import models
-import httpproxy
+import libhttpproxy
 
 has_p_info_pages=0
 
@@ -88,42 +88,41 @@ def go_p_list_page(p_list_url):
 		p_f=open('prduct.txt','a')
 		p_f.write(p_data+"\n")
 		p_f.close()
-	if 	next_page_url!='':
 		#每抓取一页切换一次代理
 		change_proxy()
+	if 	next_page_url!='':
 		go_p_list_page(next_page_url)
 
 #启用代理
 def set_proxy_enable():
-	#从http://www.xicidaili.com获取代理并写入verified.txt文件
-	httpproxy.get_proxies_from_web()
 	set_proxy()
 #设置代理信息
 def set_proxy():
 	#设置代理信息
-	print u'开始设置代理信息....\n'
-	verified_proxies_num=httpproxy.get_verified_proxies_num()
+	print u'setting ip proxy for request....\n'
+	newest_verified_proxy_ips=libhttpproxy.get_verified_proxies(30)
+	verified_proxies_num=len(newest_verified_proxy_ips)
 	if verified_proxies_num==0:
 		config.enable_proxy=False
-		print u'启用代理失败,没有验证过的代理可用，请查看verified.txt文件\n'
+		print 'Can\' enable proxy,because no verified proxies\n'
 		return
 	if config.current_proxy_index!=0 and config.current_proxy_index>=verified_proxies_num:
 		config.current_proxy_index=0
-	config.proxies=httpproxy.get_verified_proxy(config.current_proxy_index)
+	verified_proxy=newest_verified_proxy_ips[0];
+	config.proxies={verified_proxy.Protocol:verified_proxy.IP+":"+str(verified_proxy.Port)}
 	config.enable_proxy=True
-	print u'成功设置代理信息，当前代理索引'+str(config.current_proxy_index)+'\n'
+	print 'Success enable proxy:'+str(config.current_proxy_index)+'\n'
 #切换代理信息
 def change_proxy():
-	print u'切换代理信息....\n'
-	httpproxy.get_proxies_from_web()
-	verified_proxies_num=httpproxy.get_verified_proxies_num()
+	print 'change ip proxy....\n'
+	verified_proxies_num=libhttpproxy.get_verified_proxies_num()
 	if config.current_proxy_index+1>=verified_proxies_num:
 		config.current_proxy_index=0
 	else:
 		config.current_proxy_index=config.current_proxy_index+1
 	set_proxy()
 	if config.enable_proxy==True:
-		print u'已成功切换代理信息！\n' 
+		print u'Success change ip proxy.\n' 
 set_proxy_enable()
 p_f=open('prduct.txt','w')
 p_f.write("")
