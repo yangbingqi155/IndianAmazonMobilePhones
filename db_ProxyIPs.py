@@ -29,12 +29,11 @@ def add(model):
 		return True
 def move(ID):
 	sql="delete from`IPProxies`.`ProxyIPs` where ID=%s"
-	paras=(ID)
+	paras=(ID,)
 	return True if db.excute_no_query(sql,paras)>0 else False
 	
 def remove_by_ip(ip,port):
 	sql="delete from `IPProxies`.`ProxyIPs` where ip=%s and port=%s"
-	print port
 	paras=(ip,port)
 	return True if db.excute_no_query(sql,paras)>0 else False
 
@@ -77,7 +76,7 @@ def get(ip,port,protocol):
 def get_need_verified_proxis(top_num=0):
 	sql=''
 	data=[]
-	paras=(top_num)
+	paras=(top_num,)
 	models=[]
 	if top_num==0:
 		sql="select *from `IPProxies`.`ProxyIPs` order by IsVerified desc,LastVerifiedTime desc"
@@ -93,7 +92,7 @@ def get_need_verified_proxis(top_num=0):
 def get_not_verified_proxis(top_num=0):
 	sql=''
 	data=[]
-	paras=(top_num)
+	paras=(top_num,)
 	models=[]
 	if top_num==0:
 		sql="select *from `IPProxies`.`ProxyIPs` where IsVerified=0 order by LastVerifiedTime desc"

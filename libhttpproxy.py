@@ -10,9 +10,6 @@ from datetime import datetime, date, time
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-inFile = open('proxy.txt')
-outFile = codecs.open('verified.txt', 'a','utf-8')
-lock = threading.Lock()
 
 import db_ProxyIPs
 import model_ProxyIPs

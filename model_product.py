@@ -3,12 +3,14 @@
 
 def productmodel2dict(product):
 	return {
+		'id':product.id,
 		'name':product.name,
 		'score':product.score,
 		'comments':product.comments,
 		'price':product.price,
 		'color':product.color,
 		'asin':product.asin,
+		'adddate':product.adddate
 	}
 
 class ProductModel:
@@ -19,7 +21,13 @@ class ProductModel:
 		# self.comments=comments
 		# self.price=price
 		# self.color=color
-		
+	@property
+	def id(self):
+		return self.id
+	@id.setter
+	def id(self,value):
+		self.id=value
+
 	@property
 	def name(self):
 		return self.name
@@ -61,3 +69,10 @@ class ProductModel:
 	@asin.setter
 	def asin(self,value):
 		self.asin=value	
+
+	@property
+	def adddate(self):
+		return self.adddate
+	@adddate.setter
+	def adddate(self,value):
+		self.adddate=value	

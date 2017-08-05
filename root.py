@@ -9,6 +9,8 @@ import requests
 from lxml import etree
 import json
 import threading
+from datetime import datetime, date
+import uuid
 import sys
 
 try:
@@ -17,11 +19,12 @@ except ImportError:
 	import pickle
 import config
 import basic
-import models
+import model_product
 import libhttpproxy
+import db_product
 
+sys.setrecursionlimit(1000000) 
 has_p_info_pages=0
-
 p_list_url='http://www.amazon.in/s/ref=s9_acss_bw_cts_VodooFS_T1L4_w?rh=n%3A976419031%2Cn%3A!976420031%2Cn%3A1389401031%2Cn%3A1389432031%2Cp_98%3A10440597031&qid=1484135102&bbn=1389432031&low-price=&high-price=5%2C000&x=6&y=10&pf_rd_m=A1K21FY43GMZF8&pf_rd_s=merchandised-search-3&pf_rd_r=8E3TJVQ2D0S8CQR5VAVW&pf_rd_t=101&pf_rd_p=c40a9d88-2a21-4ea6-9319-5a465b910fd7&pf_rd_i=1389401031'
 
 #在产品列表面获取产品详细页面的url,并且返回下一页的URL
@@ -40,7 +43,7 @@ def get_product_info_urls(p_list_page_url):
 
 #获取产品详细信息
 def get_product_info(p_info_url):
-	p_info=models.ProductModel()
+	p_info=model_product.ProductModel()
 	status_code=200
 	html=''
 	try:
@@ -58,16 +61,20 @@ def get_product_info(p_info_url):
 		else:
 			price_el=content.xpath("//div[@id='olp_feature_div']/div/span/span[@class='a-color-price']/text()")
 			price=price_el[0].getparent().tail
-				
+			
+		price=price.replace(',','')
+		
 		color_el=content.xpath("//div[@id='variation_color_name']/div[@class='a-row']/span[@class='selection']")
 		color=color_el[0].text.strip() if len(color_el)>0 else ''
 		
+		p_info.id=str(uuid.uuid1())
 		p_info.name=name
 		p_info.asin=asin
 		p_info.score=score
 		p_info.comments=comments
 		p_info.price=price
 		p_info.color=color
+		p_info.adddate=str(datetime.now())
 	except BaseException as e:
 		print 'error url:'+p_info_url+',status_code:'+str(status_code)
 		logging.exception('error url:'+p_info_url+',status_code:'+str(status_code))
@@ -80,18 +87,25 @@ def get_product_info(p_info_url):
 	return p_info
 #分页扑爬取产品列表页
 def go_p_list_page(p_list_url):
-	#product info page url on the product list page
-	p_info_urls,next_page_url=get_product_info_urls(p_list_url)
-	
-	for info_url in p_info_urls:
-		p_data= json.dumps(get_product_info(info_url),default=models.productmodel2dict)
-		p_f=open('prduct.txt','a')
-		p_f.write(p_data+"\n")
-		p_f.close()
-		#每抓取一页切换一次代理
-		change_proxy()
-	if 	next_page_url!='':
-		go_p_list_page(next_page_url)
+	next_page_url=''
+	p_info_urls=''
+	url=p_list_url
+	i=0
+	while True:
+		#product info page url on the product list page
+		p_info_urls,next_page_url=get_product_info_urls(url)
+		for info_url in p_info_urls:
+			model=get_product_info(info_url)
+			db_product.add(model)
+			#p_data= json.dumps(model,default=model_product.productmodel2dict)
+			#print(p_data+"\n")
+			#每抓取一页切换一次代理
+			change_proxy()
+		if 	next_page_url=='':
+			break
+		else:
+			url=next_page_url
+		i=i+1
 
 #启用代理
 def set_proxy_enable():
@@ -99,7 +113,7 @@ def set_proxy_enable():
 #设置代理信息
 def set_proxy():
 	#设置代理信息
-	print u'setting ip proxy for request....\n'
+	print 'setting ip proxy for request....\n'
 	newest_verified_proxy_ips=libhttpproxy.get_verified_proxies(30)
 	verified_proxies_num=len(newest_verified_proxy_ips)
 	if verified_proxies_num==0:
@@ -114,6 +128,9 @@ def set_proxy():
 	print 'Success enable proxy:'+str(config.current_proxy_index)+'\n'
 #切换代理信息
 def change_proxy():
+	if config.enable_proxy==False:
+		print 'didn\'t enable ip proxy,can\'t change ip proxy.'
+		return
 	print 'change ip proxy....\n'
 	verified_proxies_num=libhttpproxy.get_verified_proxies_num()
 	if config.current_proxy_index+1>=verified_proxies_num:
@@ -122,13 +139,10 @@ def change_proxy():
 		config.current_proxy_index=config.current_proxy_index+1
 	set_proxy()
 	if config.enable_proxy==True:
-		print u'Success change ip proxy.\n' 
+		print 'Success change ip proxy.\n' 
 set_proxy_enable()
-p_f=open('prduct.txt','w')
-p_f.write("")
-p_f.close()
 go_p_list_page(p_list_url)
-#print json.dumps(get_product_info('http://www.amazon.in/Feature-Mobile-Torch-light-Red/dp/B06XTP882V/ref=%20sr_1_519/258-8734428-2474330?s=electronics&rps=1&ie=UTF8&qid=1501404792&sr=1-519'),default=models.productmodel2dict)
+#print json.dumps(get_product_info('http://www.amazon.in/Feature-Mobile-Torch-light-Red/dp/B06XTP882V/ref=%20sr_1_519/258-8734428-2474330?s=electronics&rps=1&ie=UTF8&qid=1501404792&sr=1-519'),default=model_product.productmodel2dict)
 #html=basic.get_html('http://www.amazon.in/Forme-N9-Selfie-Wireless-Mobile/dp/B071G2DSSC/ref=sr_1_142/257-5514151-9158917?s=electronics&rps=1&ie=UTF8&qid=1501400614&sr=1-142')
 #basic.html_write(html,'abc.html')
 #print html.encode('utf-8')
