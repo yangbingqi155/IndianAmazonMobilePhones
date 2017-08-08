@@ -29,17 +29,48 @@ p_list_url='http://www.amazon.in/s/ref=s9_acss_bw_cts_VodooFS_T1L4_w?rh=n%3A9764
 
 #在产品列表面获取产品详细页面的url,并且返回下一页的URL
 def get_product_info_urls(p_list_page_url):
-	html,status_code=basic.get_html(p_list_page_url)
-	content=etree.HTML(html)
-	result=content.xpath("//a[@class='a-link-normal s-access-detail-page  s-color-twister-title-link a-text-normal']")
-	
-	next_page_element=content.xpath("//a[@id='pagnNextLink']")
 	next_page_url= ''
-	if len(next_page_element)>0:
-		next_page_url=next_page_element[0].get("href")
-		next_page_url=config.galobal_domain+next_page_url
-	
-	return [map(lambda x:x.get("href"),result),next_page_url]
+	status_code=''
+	is_break=False
+	result=[]
+	try:
+		html,status_code=basic.get_html(p_list_page_url)
+		content=etree.HTML(html)
+		result=content.xpath("//a[@class='a-link-normal s-access-detail-page  s-color-twister-title-link a-text-normal']")
+		
+		next_page_element=content.xpath("//a[@id='pagnNextLink']")
+		
+		if len(next_page_element)>0:
+			next_page_url=next_page_element[0].get("href")
+			next_page_url=config.galobal_domain+next_page_url
+		else:
+			#如果最后一页
+			if len(content.xpath("//span[@class='pagnRA1']"))>0:
+				print 'The end list page :'+p_list_page_url
+				return [None,'',True]
+			else:
+				#may be server think this request client is a robot
+				print 'Can\'t find next list page url,but can open the current list page url.'
+				return [None,'',False]
+	except  requests.exceptions.Timeout as e:
+		print 'request connection timeout error ,product list error url:'+p_list_page_url
+		logging.exception('request connection timeout error ,product list error url:'+p_list_page_url)
+		return [None,'',False]
+	except  requests.exceptions.ConnectionError as e:
+		print 'request connection error ,product list error url:'+p_list_page_url
+		logging.exception('request connection error ,product list error url:'+p_list_page_url)
+		return [None,'',False]
+	except  requests.exceptions.RequestException as e:
+		print 'request timeout ,product list error url:'+p_list_page_url+',status_code:'+str(status_code)
+		logging.exception('request timeout,product list error url:'+p_list_page_url+',status_code:'+str(status_code))
+		return [None,'',False]
+	except BaseException as e:
+		print 'product list error url:'+p_list_page_url+',status_code:'+str(status_code)
+		logging.exception('product list error url:'+p_list_page_url+',status_code:'+str(status_code))
+		#basic.html_write(html,'abc.html')
+		#raise e
+		return [None,'',False]
+	return [map(lambda x:x.get("href"),result),next_page_url,is_break]
 
 #获取产品详细信息
 def get_product_info(p_info_url):
@@ -75,13 +106,24 @@ def get_product_info(p_info_url):
 		p_info.price=price
 		p_info.color=color
 		p_info.adddate=str(datetime.now())
+	except  requests.exceptions.Timeout as e:
+		print 'request connection timeout error ,product info error url:'+p_info_url
+		logging.exception('request connection timeout error ,product info error url:'+p_info_url)
+		return None
+	except  requests.exceptions.ConnectionError as e:
+		print 'request connection error ,product info error url:'+p_info_url
+		logging.exception('request connection error ,product info error url:'+p_info_url)
+		return None
+	except  requests.exceptions.RequestException as e:
+		print 'request timeout ,product info error url:'+p_info_url+',status_code:'+str(status_code)
+		logging.exception('request timeout,product info error url:'+p_info_url+',status_code:'+str(status_code))
+		return None
 	except BaseException as e:
-		print 'error url:'+p_info_url+',status_code:'+str(status_code)
-		logging.exception('error url:'+p_info_url+',status_code:'+str(status_code))
-		#访问超时则切换代理
-		change_proxy()
+		print 'product info error url:'+p_info_url+',status_code:'+str(status_code)
+		logging.exception('product info error url:'+p_info_url+',status_code:'+str(status_code))
 		#basic.html_write(html,'abc.html')
 		#raise e
+		return None
 	global has_p_info_pages
 	has_p_info_pages=has_p_info_pages+1
 	return p_info
@@ -90,22 +132,42 @@ def go_p_list_page(p_list_url):
 	next_page_url=''
 	p_info_urls=''
 	url=p_list_url
-	i=0
+	p_data=''
+	is_break=False
 	while True:
 		#product info page url on the product list page
-		p_info_urls,next_page_url=get_product_info_urls(url)
+		p_info_urls,next_page_url,is_break=get_product_info_urls(url)
+		#每抓取一页产品列表页切换一次代理
+		change_proxy()
+		if is_break==True:
+			break
+		if p_info_urls==None:
+			continue
 		for info_url in p_info_urls:
-			model=get_product_info(info_url)
-			db_product.add(model)
-			#p_data= json.dumps(model,default=model_product.productmodel2dict)
-			#print(p_data+"\n")
-			#每抓取一页切换一次代理
-			change_proxy()
+			while True:
+				model=get_product_info(info_url)
+				#每抓取一页产品详细页切换一次代理
+				change_proxy()
+				if model!=None:
+					try:
+						p_data= json.dumps(model,default=model_product.productmodel2dict)
+						db_product.add(model)
+					except BaseException as e:
+						print 'error product info url:'+info_url
+						print 'error product info data:'+p_data
+						logging.exception('error product info url:'+info_url)
+						logging.exception('error product info data:'+p_data)
+						raise e
+					print(p_data+"\n")
+					break
+				else:
+					continue
 		if 	next_page_url=='':
+			print 'product list page break:'+p_list_url+",p_info_urls length:"+str(p_info_urls)
 			break
 		else:
 			url=next_page_url
-		i=i+1
+			print 'product list next page:'+url+",p_info_urls length:"
 
 #启用代理
 def set_proxy_enable():
@@ -120,6 +182,8 @@ def set_proxy():
 		config.enable_proxy=False
 		print 'Can\' enable proxy,because no verified proxies\n'
 		return
+	else:
+		config.enable_proxy=True
 	if config.current_proxy_index!=0 and config.current_proxy_index>=verified_proxies_num:
 		config.current_proxy_index=0
 	verified_proxy=newest_verified_proxy_ips[0];
@@ -128,9 +192,9 @@ def set_proxy():
 	print 'Success enable proxy:'+str(config.current_proxy_index)+'\n'
 #切换代理信息
 def change_proxy():
-	if config.enable_proxy==False:
-		print 'didn\'t enable ip proxy,can\'t change ip proxy.'
-		return
+	# if config.enable_proxy==False:
+		# print 'didn\'t enable ip proxy,can\'t change ip proxy.'
+		# return
 	print 'change ip proxy....\n'
 	verified_proxies_num=libhttpproxy.get_verified_proxies_num()
 	if config.current_proxy_index+1>=verified_proxies_num:

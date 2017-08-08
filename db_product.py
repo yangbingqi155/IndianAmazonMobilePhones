@@ -20,7 +20,7 @@ def data_2_model(data):
 def add(model):
 	if len(get(model.id))<=0:
 		sql="INSERT INTO `IPProxies`.`product`(`id`,`name`,`score`,`comments`,`price`,`color`,`asin`,`adddate`)VALUES(%s,%s,%s,%s,%s,%s,%s,%s);"
-		paras=(model.id,model.name,model.score,model.comments,model.price,model.color,model.asin,model.adddate)
+		paras=(model.id,model.name.encode('utf-8'),model.score,model.comments,model.price,model.color,model.asin,model.adddate)
 		return True if db.excute_no_query(sql,paras)>0 else False
 	else:
 		return True
