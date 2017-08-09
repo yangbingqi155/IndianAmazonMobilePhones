@@ -139,9 +139,7 @@ def go_p_list_page(p_list_url):
 		p_info_urls,next_page_url,is_break=get_product_info_urls(url)
 		#每抓取一页产品列表页切换一次代理
 		change_proxy()
-		if is_break==True:
-			break
-		if p_info_urls==None:
+		if p_info_urls==None and is_break==False:
 			continue
 		for info_url in p_info_urls:
 			while True:
@@ -163,7 +161,7 @@ def go_p_list_page(p_list_url):
 				else:
 					continue
 		if 	next_page_url=='':
-			print 'product list page break:'+p_list_url+",p_info_urls length:"+str(p_info_urls)
+			print 'end of product list page,break:'+p_list_url+",p_info_urls length:"+str(p_info_urls)
 			break
 		else:
 			url=next_page_url
