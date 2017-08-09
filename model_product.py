@@ -10,7 +10,8 @@ def productmodel2dict(product):
 		'price':product.price,
 		'color':product.color,
 		'asin':product.asin,
-		'adddate':product.adddate
+		'adddate':product.adddate,
+		'url':product.url
 	}
 
 class ProductModel:
@@ -76,3 +77,10 @@ class ProductModel:
 	@adddate.setter
 	def adddate(self,value):
 		self.adddate=value	
+	
+	@property
+	def url(self):
+		return self.url
+	@url.setter
+	def url(self,value):
+		self.url=value	

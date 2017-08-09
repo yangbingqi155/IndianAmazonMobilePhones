@@ -12,6 +12,8 @@ import threading
 from datetime import datetime, date
 import uuid
 import sys
+import re
+import time
 
 try:
 	import cPickle as pickle
@@ -25,8 +27,7 @@ import db_product
 
 sys.setrecursionlimit(1000000) 
 has_p_info_pages=0
-p_list_url='http://www.amazon.in/s/ref=s9_acss_bw_cts_VodooFS_T1L4_w?rh=n%3A976419031%2Cn%3A!976420031%2Cn%3A1389401031%2Cn%3A1389432031%2Cp_98%3A10440597031&qid=1484135102&bbn=1389432031&low-price=&high-price=5%2C000&x=6&y=10&pf_rd_m=A1K21FY43GMZF8&pf_rd_s=merchandised-search-3&pf_rd_r=8E3TJVQ2D0S8CQR5VAVW&pf_rd_t=101&pf_rd_p=c40a9d88-2a21-4ea6-9319-5a465b910fd7&pf_rd_i=1389401031'
-
+p_list_url='https://www.amazon.in/s/ref=s9_acss_bw_cts_VodooFS_T2L4_w?rh=n%3A976419031%2Cn%3A!976420031%2Cn%3A1389401031%2Cn%3A1389432031%2Cn%3A1805560031&qid=1484135856&bbn=1805560031&low-price=5%2C000&high-price=10%2C000&x=3&y=12&pf_rd_m=A1K21FY43GMZF8&pf_rd_s=merchandised-search-7&pf_rd_r=JP60AKXQ7MZ9W0M6SJG0&pf_rd_t=101&pf_rd_p=476f8f1a-15ac-4693-b157-8657b9ebf7e1&pf_rd_i=1389401031'
 #在产品列表面获取产品详细页面的url,并且返回下一页的URL
 def get_product_info_urls(p_list_page_url):
 	next_page_url= ''
@@ -80,18 +81,23 @@ def get_product_info(p_info_url):
 	try:
 		html,status_code=basic.get_html(p_info_url)
 		content=etree.HTML(html)
-		asin=content.xpath('//input[@name="ASIN" and @type="hidden"]')[0].get("value")
+		#asin=content.xpath('//input[@name="ASIN" and @type="hidden"]')[0].get("value")
+		m=re.match('^(http|https)://www\.amazon\.in/([0-9a-zA-Z\-]+)/dp/([0-9a-zA-Z]+)(.+)$',p_info_url)
+		asin=m.group(3)
 		name=content.xpath("//span[@id='productTitle']")[0].text.strip()
 		score_el=content.xpath("//a[@class='a-popover-trigger a-declarative']/i/span")
-		score=score_el[0].text.strip() if len(score_el)>0 else 0
+		score=score_el[0].text.strip() if len(score_el)>0 else '0'
 		comments_el=content.xpath("//span[@id='acrCustomerReviewText']")
-		comments=comments_el[0].text.strip() if len(comments_el)>0 else 'No comments'
+		comments=comments_el[0].text.strip() if len(comments_el)>0 else '0'
 		price_el=content.xpath("//td[@class='a-span12']/span[@class='a-size-medium a-color-price']/text()")
 		if len(price_el)>0:
 			price=price_el[0].getparent().tail
 		else:
 			price_el=content.xpath("//div[@id='olp_feature_div']/div/span/span[@class='a-color-price']/text()")
-			price=price_el[0].getparent().tail
+			if len(price_el)>0:
+				price=price_el[0].getparent().tail
+			else:
+				price='0'
 			
 		price=price.replace(',','')
 		
@@ -101,11 +107,12 @@ def get_product_info(p_info_url):
 		p_info.id=str(uuid.uuid1())
 		p_info.name=name
 		p_info.asin=asin
-		p_info.score=score
-		p_info.comments=comments
+		p_info.score=float(score.replace("out of 5 stars","").strip())
+		p_info.comments=int(comments.replace(',','').replace("customer reviews","").replace("customer review","").strip())
 		p_info.price=price
 		p_info.color=color
 		p_info.adddate=str(datetime.now())
+		p_info.url=p_info_url;
 	except  requests.exceptions.Timeout as e:
 		print 'request connection timeout error ,product info error url:'+p_info_url
 		logging.exception('request connection timeout error ,product info error url:'+p_info_url)
@@ -118,10 +125,14 @@ def get_product_info(p_info_url):
 		print 'request timeout ,product info error url:'+p_info_url+',status_code:'+str(status_code)
 		logging.exception('request timeout,product info error url:'+p_info_url+',status_code:'+str(status_code))
 		return None
+	except IndexError as e:
+		print e
+		time.sleep(5)
+		return None
 	except BaseException as e:
 		print 'product info error url:'+p_info_url+',status_code:'+str(status_code)
 		logging.exception('product info error url:'+p_info_url+',status_code:'+str(status_code))
-		#basic.html_write(html,'abc.html')
+		basic.html_write(html,'abc.html')
 		#raise e
 		return None
 	global has_p_info_pages
@@ -202,6 +213,7 @@ def change_proxy():
 	set_proxy()
 	if config.enable_proxy==True:
 		print 'Success change ip proxy.\n' 
+
 set_proxy_enable()
 go_p_list_page(p_list_url)
 #print json.dumps(get_product_info('http://www.amazon.in/Feature-Mobile-Torch-light-Red/dp/B06XTP882V/ref=%20sr_1_519/258-8734428-2474330?s=electronics&rps=1&ie=UTF8&qid=1501404792&sr=1-519'),default=model_product.productmodel2dict)
