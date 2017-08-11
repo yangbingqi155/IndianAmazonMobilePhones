@@ -13,3 +13,6 @@ proxies = {
 current_proxy_index=0
 #web page response time out
 response_time_out=100
+
+#抓取产品详细页面的线程数
+threads_of_request_product_info=4

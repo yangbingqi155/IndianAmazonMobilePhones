@@ -10,14 +10,14 @@ from lxml import etree
 
 import config
 
-def get_html(url):
+def get_html(url,proxies={}):
 	headers = {'content-type': 'application/json','User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}
 	r=''
 	try:
 		if config.enable_proxy==False:
 			r=requests.get(url,headers=headers,timeout=15)
 		else:
-			r=requests.get(url,headers=headers,proxies=config.proxies,timeout=15)
+			r=requests.get(url,headers=headers,proxies=proxies if len(proxies)>0 else config.proxies,timeout=15)
 	except  requests.exceptions.ConnectionError as e:
 		raise e
 	except  requests.Timeout as e:
