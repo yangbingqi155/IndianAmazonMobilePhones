@@ -24,6 +24,8 @@ import basic
 import model_product
 import libhttpproxy
 import db_product
+import db_IPProxiesPoolApplicationSwitch
+import model_IPProxiesPoolApplicationSwitch
 
 sys.setrecursionlimit(1000000) 
 has_p_info_pages=0
@@ -245,14 +247,19 @@ def set_logging()：
                 datefmt='%a, %d %b %Y %H:%M:%S',
                 filename='amazon_mobile.log',
                 filemode='w')
-set_logging()
-set_proxy_enable()
-go_p_list_page(p_list_url)
-go_p_list_page(p_list_url1)
-go_p_list_page(p_list_url2)
-go_p_list_page(p_list_url3)
-#get_product_info('http://www.amazon.in/dp/B074PWHB1R/ref=s%20r_1_1014/262-4008005-9308516?s=electronics&ie=UTF8&qid=1502377276&sr=1-1014')
-#print json.dumps(get_product_info('http://www.amazon.in/dp/B074PWHB1R/ref=s%20r_1_1014/262-4008005-9308516?s=electronics&ie=UTF8&qid=1502377276&sr=1-1014'),default=model_product.productmodel2dict)
-#html=basic.get_html('http://www.amazon.in/Forme-N9-Selfie-Wireless-Mobile/dp/B071G2DSSC/ref=sr_1_142/257-5514151-9158917?s=electronics&rps=1&ie=UTF8&qid=1501400614&sr=1-142')
-#basic.html_write(html,'abc.html')
-#print html.encode('utf-8')
+
+try:
+	set_logging()
+	set_proxy_enable()
+	go_p_list_page(p_list_url)
+	go_p_list_page(p_list_url1)
+	go_p_list_page(p_list_url2)
+	go_p_list_page(p_list_url3)
+	#get_product_info('http://www.amazon.in/dp/B074PWHB1R/ref=s%20r_1_1014/262-4008005-9308516?s=electronics&ie=UTF8&qid=1502377276&sr=1-1014')
+	#print json.dumps(get_product_info('http://www.amazon.in/dp/B074PWHB1R/ref=s%20r_1_1014/262-4008005-9308516?s=electronics&ie=UTF8&qid=1502377276&sr=1-1014'),default=model_product.productmodel2dict)
+	#html=basic.get_html('http://www.amazon.in/Forme-N9-Selfie-Wireless-Mobile/dp/B071G2DSSC/ref=sr_1_142/257-5514151-9158917?s=electronics&rps=1&ie=UTF8&qid=1501400614&sr=1-142')
+	#basic.html_write(html,'abc.html')
+	#print html.encode('utf-8')
+except BaseException as e:
+finally：
+	db_IPProxiesPoolApplicationSwitch.update(False)
