@@ -197,7 +197,6 @@ def add_product(info_url):
 			print(p_data+"\n")
 			break
 		else:
-		logging
 			print 'can\'t get product info,product info url:'+info_url
 			logging.info('can\'t get product info,product info url:'+info_url)
 			continue
@@ -241,7 +240,7 @@ def change_proxy():
 	if config.enable_proxy==True:
 		logging.info('Success change ip proxy.\n' )
 		print 'Success change ip proxy.\n' 
-def set_logging()：
+def set_logging():
 	logging.basicConfig(level=logging.DEBUG,
                 format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                 datefmt='%a, %d %b %Y %H:%M:%S',
@@ -261,5 +260,6 @@ try:
 	#basic.html_write(html,'abc.html')
 	#print html.encode('utf-8')
 except BaseException as e:
-finally：
+	pass
+finally:
 	db_IPProxiesPoolApplicationSwitch.update(False)
