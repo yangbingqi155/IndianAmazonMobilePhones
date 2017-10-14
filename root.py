@@ -208,7 +208,7 @@ def set_proxy_enable():
 def set_proxy():
 	#设置代理信息
 	print 'setting ip proxy for request....\n'
-	newest_verified_proxy_ips=libhttpproxy.get_verified_proxies(30)
+	newest_verified_proxy_ips=libhttpproxy.get_verified_proxies(60)
 	verified_proxies_num=len(newest_verified_proxy_ips)
 	if verified_proxies_num==0:
 		config.enable_proxy=False
