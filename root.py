@@ -158,11 +158,13 @@ def go_p_list_page(p_list_url):
 		#每抓取一页产品列表页切换一次代理
 		change_proxy()
 		if p_info_urls==None:
+			time.sleep(1)
 			continue
 		
 		all_thread=[]
 		
 		for info_url in p_info_urls:
+			time.sleep(1)
 			#add_product(info_url)
 			thread=threading.Thread(target=add_product,args=(info_url,))
 			all_thread.append(thread)
@@ -208,7 +210,7 @@ def set_proxy_enable():
 def set_proxy():
 	#设置代理信息
 	print 'setting ip proxy for request....\n'
-	newest_verified_proxy_ips=libhttpproxy.get_verified_proxies(60)
+	newest_verified_proxy_ips=libhttpproxy.get_verified_proxies(150)
 	verified_proxies_num=len(newest_verified_proxy_ips)
 	if verified_proxies_num==0:
 		config.enable_proxy=False
